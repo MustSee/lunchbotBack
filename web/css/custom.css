@@ -1,0 +1,80 @@
+html,
+body {
+    font-family: Arial, sans-serif;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+#map {
+    height: 100%;
+    width: 50%;
+    float: left;
+}
+
+#userInterface {
+    height: 100%;
+    width: 50%;
+    float: left;
+    background-color: #342434;
+}
+
+#top {
+    height: 20%;
+    background-color: #fafae1;
+}
+
+#main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+input.mainInput {
+    margin-top: 50px;
+    width: 40%;
+    padding: 10px;
+    outline: none;
+    font-size: large;
+}
+
+div#description {
+    width: 70%;
+    margin: 50px 0;
+    padding: 50px;
+    background-color: #d3ab53;
+    display: none;
+    color:white;
+    border-radius: 20px;
+}
+
+
+/*********************
+*** AUTO COMPLETE *****
+*********************/
+
+#list ul{
+    margin:0;
+    padding:0;
+    list-style-type: none;
+}
+
+#list{
+    border-radius: 5px;
+    padding:20px;
+    background-color: white;
+    display: none;
+}
+
+#list ul li:hover{
+    cursor:pointer;
+    background-color: #CCCCCC;
+}
+
+#list ul li {
+    padding: 10px 5px;
+}
+
+#list ul li.active{
+    background-color:#CCCCCC;
+}

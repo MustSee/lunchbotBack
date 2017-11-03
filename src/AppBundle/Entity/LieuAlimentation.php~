@@ -1,0 +1,222 @@
+<?php
+
+namespace AppBundle\Entity;
+
+use Doctrine\ORM\Mapping as ORM;
+
+/**
+ * LieuAlimentation
+ *
+ * @ORM\Table(name="LIEU_ALIMENTATION")
+ * @ORM\Entity
+ */
+class LieuAlimentation
+{
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="DENOMINATION", type="string", length=255, nullable=false)
+     */
+    private $denomination;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="DESCRIPTION", type="text", length=65535, nullable=true)
+     */
+    private $description;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="ADRESSE", type="string", length=255, nullable=true)
+     */
+    private $adresse;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="CODE_POSTAL", type="string", length=5, nullable=true)
+     */
+    private $codePostal = '92100';
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="VILLE", type="string", length=100, nullable=true)
+     */
+    private $ville = 'Boulogne-Billancourt';
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="POSITION_LONGITUDE", type="decimal", precision=20, scale=16, nullable=true)
+     */
+    private $positionLongitude;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="POSITION_LATITUDE", type="decimal", precision=20, scale=16, nullable=true)
+     */
+    private $positionLatitude;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="SITE_INTERNET", type="string", length=255, nullable=true)
+     */
+    private $siteInternet;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="TELEPHONE", type="string", length=255, nullable=true)
+     */
+    private $telephone;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="PHOTO", type="blob", length=65535, nullable=true)
+     */
+    private $photo;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="CATEGORIE", type="simple_array", nullable=false)
+     */
+    private $categorie;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="AMBIANCE", type="simple_array", nullable=false)
+     */
+    private $ambiance;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="TYPE_PAIEMENT", type="simple_array", nullable=false)
+     */
+    private $typePaiement;
+
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="PAIEMENT_CB_MONTANT_MIN", type="integer", nullable=false)
+     */
+    private $paiementCbMontantMin;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="SERVICE", type="simple_array", nullable=true)
+     */
+    private $service;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="TYPE_PREPARATION", type="simple_array", nullable=true)
+     */
+    private $typePreparation;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="TYPE_CUISINE", type="simple_array", nullable=false)
+     */
+    private $typeCuisine;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="TYPE_PLAT", type="simple_array", nullable=false)
+     */
+    private $typePlat;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="SPECIALITE", type="text", length=65535, nullable=true)
+     */
+    private $specialite;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="PROMOTION", type="text", length=65535, nullable=true)
+     */
+    private $promotion;
+
+    /**
+     * @var array
+     *
+     * @ORM\Column(name="JOUR_OUVERTURE", type="simple_array", nullable=false)
+     */
+    private $jourOuverture;
+
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="HEURE_OUVERTURE", type="integer", nullable=false)
+     */
+    private $heureOuverture;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="HEURE_FERMETURE", type="boolean", nullable=false)
+     */
+    private $heureFermeture;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="NOTATION", type="boolean", nullable=true)
+     */
+    private $notation;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="BUDGET", type="string", nullable=true)
+     */
+    private $budget;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="QUALITE", type="boolean", nullable=true)
+     */
+    private $qualite;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="QUANTITE", type="boolean", nullable=true)
+     */
+    private $quantite;
+
+    /**
+     * @var boolean
+     *
+     * @ORM\Column(name="RAPIDITE_SERVICE", type="boolean", nullable=true)
+     */
+    private $rapiditeService;
+
+    /**
+     * @var integer
+     *
+     * @ORM\Column(name="ID", type="integer")
+     * @ORM\Id
+     * @ORM\GeneratedValue(strategy="IDENTITY")
+     */
+    private $id;
+
+
+}
+

@@ -1,0 +1,43 @@
+{% extends 'base.html.twig' %}
+
+
+{% block body %}
+
+  {#{{ dump(everything)}}#}
+
+  {# Where the map loads #}
+  <div id="map"></div>
+
+  <div id="userInterface">
+
+    <div id="top"></div>
+
+    <div id="main">
+        <input class="mainInput" type="text" placeholder="Entrez une bonne adresse" id="autoComplete">
+        <div id="list"></div>
+        <div id="description"></div>
+    </div>
+
+  </div>
+{% endblock %}
+
+
+{% block javascripts %}
+
+  {# Jquery #}
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.js"></script>
+
+  {# FOSJsRouting #}
+  <script src="{{ asset('bundles/fosjsrouting/js/router.js') }}"></script>
+  <script src="{{ path('fos_js_routing_js', { callback: 'fos.Router.setData' }) }}"></script>
+
+  {# Google API #}
+  <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAgwRnp6255JG_OTNKA70k_NrUcU4XBB_g&v=3&callback=initMap">
+  </script>
+
+  {# Main Script #}
+  <script src="{{ asset('js/map.js') }}"></script>
+    <script src="{{ asset('js/autocomplete.js') }}"></script>
+
+{% endblock %}
