@@ -38,9 +38,9 @@ class Place_to_eat
     /**
      * @var string
      *
-     * @ORM\Column(name="town", type="string", length=255, nullable=true)
+     * @ORM\Column(name="city", type="string", length=255, nullable=true)
      */
-    private $town;
+    private $city;
 
     /**
      * @var string

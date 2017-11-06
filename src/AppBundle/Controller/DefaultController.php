@@ -2,7 +2,7 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Entity\Place_to_eat;
+use AppBundle\Entity\Place;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -49,116 +49,94 @@ class DefaultController extends Controller
     }
 
     /**
-     * @Route("/all_added_spots",
-     *     name="all_added_spots"
-     * )
+     * @Route("/api/places")
      * @Method("GET")
      */
-    public function getAllAddedPlacesToEatAction()
+    public function getPlacesAction()
     {
         // Call to Repository
         $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:Place_to_eat');
+        $linkToRepo = $em->getRepository('AppBundle:Place');
 
-        $allPlacesAdded = $linkToRepo->findAllAddedPlacesToEat();
+        $places = $linkToRepo->findPlaces();
 
         return new JsonResponse([
-            'allPlacesAdded' => $allPlacesAdded
+            'places' => $places
         ]);
     }
 
 
+//    /**
+//     * @Route("/all_places_to_eat/{name}",
+//     *     name="one_place_to_eat",
+//     *     options={"expose" = true},
+//     * )
+//     * @Method("GET")
+//     */
+//    public function getOnePlaceToEatAction(Request $request)
+//    {
+//        // Call to repo
+//        $em = $this->get('doctrine')->getManager();
+//        $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
+//
+//        // Param for research
+//        $name = $request->get('name');
+//        $onePlace = $linkToRepo->findOnePlace($name);
+//
+//        return new JsonResponse([
+//            'onePlace' => $onePlace
+//        ]);
+//    }
+
+
     /**
-     * @Route("/all_places_to_eat/{name}",
-     *     name="one_place_to_eat",
-     *     options={"expose" = true},
-     * )
-     * @Method("GET")
-     */
-    public function getOnePlaceToEatAction(Request $request)
-    {
-        // Call to repo
-        $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
-
-        // Param for research
-        $name = $request->get('name');
-        $onePlace = $linkToRepo->findOnePlace($name);
-
-        return new JsonResponse([
-            'onePlace' => $onePlace
-        ]);
-    }
-
-
-    /**
-     * @Route("/autocomplete/{find}",
-     *     name="autoComplete",
+     * @Route("/api/autocomplete/{query}",
+     *     name="autocomplete",
      *     options={"expose" = true}
      * )
      * @Method("GET")
      */
-    public function autoCompleteAction(Request $request)
+    public function autocompleteAction(Request $request)
     {
         // link to repo
         $em = $this->get('doctrine')->getManager();
         $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
 
         // Parameter for research
-        $chars = $request->get('find');
+        $chars = $request->get('query');
         $places = $linkToRepo->findAllByChars($chars);
 
         return new JsonResponse([
             'places' => $places
         ]);
-
-
-        // Link to repo ou repos...
-            // Renvoyer un résultat selon la valeur de l'input
     }
 
 
     /**
-     * @Route("/add_new_place_to_eat",
-     * name="add_new_place_to_eat",
-     * options = { "expose" = true },
-     * )
+     * @Route("/api/places")
+     * @Method({"POST", "OPTIONS"})
      */
-    public function postNewPlaceToEatAction(Request $request)
+    public function postPlacesAction(Request $request)
     {
-
-        // Il faut qu'à un moment je vérifie l'intégrité des données
+        // TODO : check data integrity
         $em = $this->get('doctrine')->getManager();
 
-        var_dump(json_decode($request->getContent())); die();
+        // Obtaining associative array with the option true
+        $placeJson = json_decode($request->getContent(), true);
 
-        $datas = $request->get("new_spot");
-        // J'ai un tableau de données avec l'option true
-        $datas = json_decode($datas, true);
+        $place = new Place();
 
-        $name = $datas["name"];
-        $adress = $datas["adress"];
-        $town = $datas["town"];
-        $picture = base64_decode($datas["picture"]);
-        echo $picture;
-        $lat = $datas["lat"];
-        $lng = $datas["lng"];
+        $place->setName($placeJson["name"]);
+        $place->setAdress($placeJson['adress']);
+        $place->setCity($placeJson['city']);
+        $place->setCoordsLatitude($placeJson['lat']);
+        $place->setCoordsLongitude($placeJson['lng']);
 
 
-        $spot = new Place_to_eat();
-
-        $spot->setName($name);
-        $spot->setAdress($adress);
-        $spot->setTown($town);
-        $spot->setPicturePath($picture);
-        $spot->setCoordsLatitude($lat);
-        $spot->setCoordsLongitude($lng);
-
-        $em->persist($spot);
+        $em->persist($place);
         $em->flush();
 
-        return new Response("Added one spot", 201);
-
+        return new Response("Added one place", 201);
     }
 
 
