@@ -16,4 +16,14 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
         ');
         return $q->getResult();
     }
+
+    public function findAllByChars($param) {
+        $q = $this->getEntityManager()->createQuery('
+            SELECT p.name FROM AppBundle:Place p WHERE p.name LIKE :param
+        ');
+        $q->setParameters([
+            'param' => "%".$param."%"
+        ]);
+        return $q->getResult();
+    }
 }

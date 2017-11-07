@@ -100,7 +100,7 @@ class DefaultController extends Controller
     {
         // link to repo
         $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
+        $linkToRepo = $em->getRepository('AppBundle:Place');
 
         // Parameter for research
         $chars = $request->get('query');
@@ -131,7 +131,6 @@ class DefaultController extends Controller
         $place->setCity($placeJson['city']);
         $place->setCoordsLatitude($placeJson['lat']);
         $place->setCoordsLongitude($placeJson['lng']);
-
 
         $em->persist($place);
         $em->flush();
