@@ -2,7 +2,7 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Entity\Place_to_eat;
+use AppBundle\Entity\Place;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,65 +13,25 @@ use Symfony\Component\HttpFoundation\Response;
 class DefaultController extends Controller
 {
     /**
-     * @Route("/", name="homepage")
-     */
-    public function indexAction(Request $request)
-    {
-      // Call to repository
-      $em = $this->get('doctrine')->getManager();
-      $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
-
-      $everything = $linkToRepo->findAll();
-        return $this->render('default/index.html.twig', [
-          'everything'=>$everything
-        ]);
-    }
-
-
-    /**
-     * @Route("/all_places_to_eat",
-     * name="all_places_to_eat",
-     * options = { "expose" = true },
-     * )
+     * @Route("/api/places")
      * @Method("GET")
      */
-    public function getAllPlacesToEatAction()
-    {
-      // Call to repository
-      $em = $this->get('doctrine')->getManager();
-      $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
-
-      $allPlaces = $linkToRepo->findAllPlacesToEat();
-
-      return new JsonResponse([
-          'allPlaces' => $allPlaces
-      ]);
-    }
-
-    /**
-     * @Route("/all_added_spots",
-     *     name="all_added_spots"
-     * )
-     * @Method("GET")
-     */
-    public function getAllAddedPlacesToEatAction()
+    public function getPlacesAction()
     {
         // Call to Repository
         $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:Place_to_eat');
+        $linkToRepo = $em->getRepository('AppBundle:Place');
 
-        $allPlacesAdded = $linkToRepo->findAllAddedPlacesToEat();
+        $places = $linkToRepo->findPlaces();
 
         return new JsonResponse([
-            'allPlacesAdded' => $allPlacesAdded
+            'places' => $places
         ]);
     }
 
 
     /**
-     * @Route("/all_places_to_eat/{name}",
-     *     name="one_place_to_eat",
-     *     options={"expose" = true},
+     * @Route("/api/places/{name}",
      * )
      * @Method("GET")
      */
@@ -79,11 +39,11 @@ class DefaultController extends Controller
     {
         // Call to repo
         $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
+        $linkToRepo = $em->getRepository('AppBundle:Place');
 
         // Param for research
         $name = $request->get('name');
-        $onePlace = $linkToRepo->findOnePlace($name);
+        $onePlace = $linkToRepo->findPlace($name);
 
         return new JsonResponse([
             'onePlace' => $onePlace
@@ -92,99 +52,83 @@ class DefaultController extends Controller
 
 
     /**
-     * @Route("/autocomplete/{find}",
-     *     name="autoComplete",
-     *     options={"expose" = true}
-     * )
+     * @Route("/api/autocomplete/{query}")
      * @Method("GET")
      */
-    public function autoCompleteAction(Request $request)
+    public function autocompleteAction(Request $request)
     {
         // link to repo
         $em = $this->get('doctrine')->getManager();
-        $linkToRepo = $em->getRepository('AppBundle:LieuAlimentation');
+        $linkToRepo = $em->getRepository('AppBundle:Place');
 
         // Parameter for research
-        $chars = $request->get('find');
+        $chars = $request->get('query');
         $places = $linkToRepo->findAllByChars($chars);
 
         return new JsonResponse([
             'places' => $places
         ]);
-
-
-        // Link to repo ou repos...
-            // Renvoyer un résultat selon la valeur de l'input
     }
 
 
     /**
-     * @Route("/add_new_place_to_eat",
-     * name="add_new_place_to_eat",
-     * options = { "expose" = true },
-     * )
+     * @Route("/api/places")
+     * @Method({"POST", "OPTIONS"})
      */
-    public function postNewPlaceToEatAction(Request $request)
+    public function postPlacesAction(Request $request)
     {
+            $em = $this->get('doctrine')->getManager();
 
-        // Il faut qu'à un moment je vérifie l'intégrité des données
+            // Obtaining associative array with the option true
+            $placeJson = json_decode($request->getContent(), true);
+
+
+            $place = new Place();
+
+            $place->setName($placeJson["name"]);
+            $place->setAdress($placeJson['adress']);
+            $place->setCoordsLatitude($placeJson['lat']);
+            $place->setCoordsLongitude($placeJson['lng']);
+
+
+            $em->persist($place);
+            $em->flush();
+
+            return new Response('add one place', 201);
+        }
+
+
+    /**
+     * @Route("/api/addALikeOnPlace/{name}")
+     * @Method("GET")
+     */
+    public function addALikeOnPlace(Request $request)
+    {
+            $place = $request->get('name');
+
+            $em = $this->get('doctrine')->getManager();
+            $linkToRepo = $em->getRepository('AppBundle:Place');
+            $linkToRepo->incrementCounter($place);
+
+
+            return new Response('add a like', 201);
+    }
+
+    /**
+     * @Route("/api/likeCounter/{name}")
+     * @Method("GET")
+     */
+    public function likeCounterAction (Request $request)
+    {
+        $place = $request->get("name");
+
         $em = $this->get('doctrine')->getManager();
+        $linkToRepo = $em->getRepository('AppBundle:Place');
+        $likeCount = $linkToRepo->retrieveLike($place);
 
-        var_dump(json_decode($request->getContent())); die();
-
-        $datas = $request->get("new_spot");
-        // J'ai un tableau de données avec l'option true
-        $datas = json_decode($datas, true);
-
-        $name = $datas["name"];
-        $adress = $datas["adress"];
-        $town = $datas["town"];
-        $picture = base64_decode($datas["picture"]);
-        echo $picture;
-        $lat = $datas["lat"];
-        $lng = $datas["lng"];
-
-
-        $spot = new Place_to_eat();
-
-        $spot->setName($name);
-        $spot->setAdress($adress);
-        $spot->setTown($town);
-        $spot->setPicturePath($picture);
-        $spot->setCoordsLatitude($lat);
-        $spot->setCoordsLongitude($lng);
-
-        $em->persist($spot);
-        $em->flush();
-
-        return new Response("Added one spot", 201);
-
-    }
-
-
-    /**
-     * @Route("/like_a_place",
-     * name="like_a_place",
-     * options = { "expose" = true },
-     * )
-     * @Method("POST")
-     */
-    public function likeAPlaceAction()
-    {
-        // TO DO
-            // Créer la table like en lien avec l'autre
-            // A chaque clique, incrémenter (comme dans TinyUrl)
-            // Limiter le nombre de clicks
-    }
-
-    /**
-     * @ROUTE("/test/{mars}",
-     *     name="testAxios")
-     * @Method("POST")
-     */
-    public function testAxios(Request $request)
-    {
-        var_dump($request);
+        return new JsonResponse([
+            'likeCount' => $likeCount
+        ]);
     }
 
 }

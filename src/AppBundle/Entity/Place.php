@@ -5,12 +5,12 @@ namespace AppBundle\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * Place_to_eat
+ * Place
  *
- * @ORM\Table(name="place_to_eat")
- * @ORM\Entity(repositoryClass="AppBundle\Repository\Place_to_eatRepository")
+ * @ORM\Table(name="place")
+ * @ORM\Entity(repositoryClass="AppBundle\Repository\PlaceRepository")
  */
-class Place_to_eat
+class Place
 {
     /**
      * @var int
@@ -36,39 +36,43 @@ class Place_to_eat
     private $adress;
 
     /**
-     * @var string
-     *
-     * @ORM\Column(name="town", type="string", length=255, nullable=true)
-     */
-    private $town;
-
-    /**
-     * @var string
-     *
-     * @ORM\Column(name="picture_path", type="string", length=255, nullable=true)
-     */
-    private $picturePath;
-
-    /**
-     * @var \DateTime
-     *
-     * @ORM\Column(name="created_at", type="datetime", nullable=true)
-     */
-    private $createdAt;
-
-    /**
      * @var float
      *
-     * @ORM\Column(name="coords_latitude", type="float", nullable=true)
+     * @ORM\Column(name="coordsLatitude", type="float", nullable=true)
      */
     private $coordsLatitude;
 
     /**
      * @var float
      *
-     * @ORM\Column(name="coords_longitude", type="float", nullable=true)
+     * @ORM\Column(name="coordsLongitude", type="float", nullable=true)
      */
     private $coordsLongitude;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(name="picturePath", type="string", length=255, nullable=true)
+     */
+    private $picturePath;
+
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="createdAt", type="datetime", nullable=true)
+     */
+    private $createdAt;
+
+    /**
+     * @var int
+     *
+     * @ORM\Column(name="likeSpot", type="integer")
+     */
+    private $likeSpot;
+
+    public function __construct() {
+        $this->setLikeSpot(0);
+    }
 
 
     /**
@@ -86,7 +90,7 @@ class Place_to_eat
      *
      * @param string $name
      *
-     * @return Place_to_eat
+     * @return Place
      */
     public function setName($name)
     {
@@ -110,7 +114,7 @@ class Place_to_eat
      *
      * @param string $adress
      *
-     * @return Place_to_eat
+     * @return Place
      */
     public function setAdress($adress)
     {
@@ -130,83 +134,11 @@ class Place_to_eat
     }
 
     /**
-     * Set town
-     *
-     * @param string $town
-     *
-     * @return Place_to_eat
-     */
-    public function setTown($town)
-    {
-        $this->town = $town;
-
-        return $this;
-    }
-
-    /**
-     * Get town
-     *
-     * @return string
-     */
-    public function getTown()
-    {
-        return $this->town;
-    }
-
-    /**
-     * Set picturePath
-     *
-     * @param string $picturePath
-     *
-     * @return Place_to_eat
-     */
-    public function setPicturePath($picturePath)
-    {
-        $this->picturePath = $picturePath;
-
-        return $this;
-    }
-
-    /**
-     * Get picturePath
-     *
-     * @return string
-     */
-    public function getPicturePath()
-    {
-        return $this->picturePath;
-    }
-
-    /**
-     * Set createdAt
-     *
-     * @param \DateTime $createdAt
-     *
-     * @return Place_to_eat
-     */
-    public function setCreatedAt($createdAt)
-    {
-        $this->createdAt = $createdAt;
-
-        return $this;
-    }
-
-    /**
-     * Get createdAt
-     *
-     * @return \DateTime
-     */
-    public function getCreatedAt()
-    {
-        return $this->createdAt;
-    }
-
-    /**
      * Set coordsLatitude
      *
      * @param float $coordsLatitude
      *
-     * @return Place_to_eat
+     * @return Place
      */
     public function setCoordsLatitude($coordsLatitude)
     {
@@ -230,7 +162,7 @@ class Place_to_eat
      *
      * @param float $coordsLongitude
      *
-     * @return Place_to_eat
+     * @return Place
      */
     public function setCoordsLongitude($coordsLongitude)
     {
@@ -247,6 +179,78 @@ class Place_to_eat
     public function getCoordsLongitude()
     {
         return $this->coordsLongitude;
+    }
+
+    /**
+     * Set picturePath
+     *
+     * @param string $picturePath
+     *
+     * @return Place
+     */
+    public function setPicturePath($picturePath)
+    {
+        $this->picturePath = $picturePath;
+
+        return $this;
+    }
+
+    /**
+     * Get picturePath
+     *
+     * @return string
+     */
+    public function getPicturePath()
+    {
+        return $this->picturePath;
+    }
+
+    /**
+     * Set createdAt
+     *
+     * @param \DateTime $createdAt
+     *
+     * @return Place
+     */
+    public function setCreatedAt($createdAt)
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * Get createdAt
+     *
+     * @return \DateTime
+     */
+    public function getCreatedAt()
+    {
+        return $this->createdAt;
+    }
+
+    /**
+     * Set likeSpot
+     *
+     * @param integer $likeSpot
+     *
+     * @return Place
+     */
+    public function setLikeSpot($likeSpot)
+    {
+        $this->likeSpot = $likeSpot;
+
+        return $this;
+    }
+
+    /**
+     * Get likeSpot
+     *
+     * @return int
+     */
+    public function getLikeSpot()
+    {
+        return $this->likeSpot;
     }
 }
 
