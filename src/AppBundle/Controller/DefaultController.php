@@ -110,8 +110,11 @@ class DefaultController extends Controller
             $linkToRepo = $em->getRepository('AppBundle:Place');
             $linkToRepo->incrementCounter($place);
 
+            $likeCount = $linkToRepo->retrieveLike($place);
 
-            return new Response('add a like', 201);
+            return new JSONResponse([
+                'likeCount' => $likeCount
+            ]);
     }
 
     /**
