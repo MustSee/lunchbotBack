@@ -31,8 +31,7 @@ class DefaultController extends Controller
 
 
     /**
-     * @Route("/api/places/{name}",
-     * )
+     * @Route("/api/places/{name}")
      * @Method("GET")
      */
     public function getOnePlaceToEatAction(Request $request)
@@ -49,7 +48,6 @@ class DefaultController extends Controller
             'onePlace' => $onePlace
         ]);
     }
-
 
     /**
      * @Route("/api/autocomplete/{query}")
@@ -96,7 +94,6 @@ class DefaultController extends Controller
 
             return new Response('add one place', 201);
         }
-
 
     /**
      * @Route("/api/addALikeOnPlace/{name}")
