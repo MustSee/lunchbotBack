@@ -68,7 +68,6 @@ class DefaultController extends Controller
         ]);
     }
 
-
     /**
      * @Route("/api/places")
      * @Method({"POST", "OPTIONS"})
@@ -131,4 +130,24 @@ class DefaultController extends Controller
         ]);
     }
 
+    /**
+     * @Route("/api/test")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function testAction (Request $request)
+    {
+        $pictureJson = json_decode($request->getContent(), true);
+
+        //var_dump($pictureJson);
+
+        $raqqa = $pictureJson["path"];
+        var_dump($raqqa); die();
+
+        $pic64 = base64_decode($pictureJson["pic64"]);
+
+
+        return new JsonResponse([
+            'pic64' => 'ok'
+        ]);
+    }
 }
