@@ -12,14 +12,14 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
 {
     public function findPlaces() {
         $q = $this->getEntityManager()->createQuery('
-        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id FROM AppBundle:Place p
+        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot FROM AppBundle:Place p
         ');
         return $q->getResult();
     }
 
     public function findPlace($param) {
         $q = $this->getEntityManager()->createQuery('
-        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id FROM AppBundle:Place p WHERE p.name = :name
+        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot FROM AppBundle:Place p WHERE p.name = :name
         ');
         $q->setParameters([
             'name' => $param

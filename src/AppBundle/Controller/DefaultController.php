@@ -3,12 +3,16 @@
 namespace AppBundle\Controller;
 
 use AppBundle\Entity\Place;
+use AppBundle\Entity\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\File\File;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
 {
@@ -74,6 +78,12 @@ class DefaultController extends Controller
      */
     public function postPlacesAction(Request $request)
     {
+    /*
+     * Chrome is preflighting the request to look for CORS headers.
+     * If the request is acceptable, it will then send the real request.
+     * If you're doing this cross-domain, you will simply have to deal with it.
+     */
+        if($request->getMethod() === "POST") {
             $em = $this->get('doctrine')->getManager();
 
             // Obtaining associative array with the option true
@@ -92,7 +102,12 @@ class DefaultController extends Controller
             $em->flush();
 
             return new Response('add one place', 201);
+
+        } elseif ($request->getMethod() === "OPTIONS") {
+            return new Response('Cross-site request preflight, option method used', 200);
         }
+
+    }
 
     /**
      * @Route("/api/addALikeOnPlace/{name}")
@@ -136,18 +151,53 @@ class DefaultController extends Controller
      */
     public function testAction (Request $request)
     {
-        $pictureJson = json_decode($request->getContent(), true);
 
-        //var_dump($pictureJson);
+        if($request->getMethod() === 'POST') {
 
-        $raqqa = $pictureJson["path"];
-        var_dump($raqqa); die();
-
-        $pic64 = base64_decode($pictureJson["pic64"]);
+            $em = $this->get('doctrine')->getManager();
 
 
-        return new JsonResponse([
-            'pic64' => 'ok'
-        ]);
+            $pictureJson = json_decode($request->getContent(), true);
+            $picture = $pictureJson["pic64"];
+            $name = $pictureJson["path"];
+
+            //$decodePicture = base64_decode($picture);
+            var_dump($picture); die();
+
+            $product = new Product();
+            $product->setImage($name);
+            $product->setUpdatedAt(new \DateTime());
+            $product->setImageFile($decodePicture);
+
+
+            $em->persist($product);
+            $em->flush();
+
+            return new JsonResponse([
+                'test' => 'testpassed'
+            ]);
+
+        } elseif ($request->getMethod() === "OPTIONS") {
+            return new Response('Cross-site request preflight, option method used', 200);
+        }
+
+//        $pictureJson = json_decode($request->getContent(), true);
+//
+//        //var_dump($pictureJson);
+//
+//        $raqqa = $pictureJson["path"];
+//        //var_dump($raqqa); die();
+//
+//        $pic64 = base64_decode($pictureJson["pic64"]);
+//
+//        $response = new Response;
+//
+//        $response->setContent(
+//            json_encode(['pic64' => 'ok'])
+//        );
+//        $response->headers->set('Content-Type', 'application/json');
+
+
+
     }
 }
