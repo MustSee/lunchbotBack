@@ -2,16 +2,19 @@
 
 namespace AppBundle\Controller;
 
+use AppBundle\Entity\image;
 use AppBundle\Entity\Place;
 use AppBundle\Entity\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\ResponseHeaderBag;
 use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
@@ -87,8 +90,8 @@ class DefaultController extends Controller
             $em = $this->get('doctrine')->getManager();
 
             // Obtaining associative array with the option true
-            $placeJson = json_decode($request->getContent(), true);
-
+            $place = $request->get('place');
+            $placeJson = json_decode($place, true);
 
             $place = new Place();
 
@@ -97,6 +100,38 @@ class DefaultController extends Controller
             $place->setCoordsLatitude($placeJson['lat']);
             $place->setCoordsLongitude($placeJson['lng']);
 
+            // Obtaining image
+            $image = $_FILES;
+
+            // Si l'image existe
+            if($image) {
+                // Current directory
+                $target_dir = __DIR__ . "/../../../web/images/";
+                // Current directory + filename
+                $target_file = $target_dir . basename($image["file"]["name"]);
+                $uploadOk = 1;
+                // file type = png
+                $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
+
+                // Checking if it's an image
+                $check = getimagesize($_FILES["file"]["tmp_name"]);
+                if ($check !== false) {
+                    // File is an image
+                    $uploadOk = 1;
+                } else {
+                    $uploadOk = 0;
+                }
+
+                // Integrity checks
+                // https://www.w3schools.com/php/php_file_upload.asp
+
+                if ($uploadOk == 1) {
+                    // We move the file from the temporary directory to the target.
+                    if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
+                        $place->setPicturePath($image["file"]["name"]);
+                    }
+                }
+            }
 
             $em->persist($place);
             $em->flush();
@@ -106,7 +141,6 @@ class DefaultController extends Controller
         } elseif ($request->getMethod() === "OPTIONS") {
             return new Response('Cross-site request preflight, option method used', 200);
         }
-
     }
 
     /**
@@ -146,58 +180,112 @@ class DefaultController extends Controller
     }
 
     /**
+     * @Route("/api/loadActiveImage/{name}")
+     * @Method("GET")
+     */
+    public function loadImageActivePlaceAction(Request $request)
+    {
+        $em = $this->get('doctrine')->getManager();
+        $linkToRepo = $em->getRepository('AppBundle:Place');
+
+        // Find image path from name
+        $name = $request->get('name');
+        $imagePathFromName = $linkToRepo->retrieveImagePathFromName($name);
+
+        if ($imagePathFromName[0]["picturePath"] === NULL) {
+            // S'il n'y a pas d'images
+            return new Response('no image');
+        } else {
+            $path = $imagePathFromName[0]["picturePath"];
+            $target_dir = __DIR__."/../../../web/";
+            $response =  new BinaryFileResponse($target_dir.$path);
+            return $response;
+        }
+
+    }
+
+    /**
      * @Route("/api/test")
      * @Method({"POST", "OPTIONS"})
      */
     public function testAction (Request $request)
     {
 
-        if($request->getMethod() === 'POST') {
+        if ($request->getMethod() === 'POST') {
 
             $em = $this->get('doctrine')->getManager();
 
 
-            $pictureJson = json_decode($request->getContent(), true);
-            $picture = $pictureJson["pic64"];
-            $name = $pictureJson["path"];
+            $image = $_FILES;
 
-            //$decodePicture = base64_decode($picture);
-            var_dump($picture); die();
+            $name = $request->get('name');
 
-            $product = new Product();
-            $product->setImage($name);
-            $product->setUpdatedAt(new \DateTime());
-            $product->setImageFile($decodePicture);
+            // If image is empty
+
+            // Current directory
+            $target_dir = __DIR__."/../../../web/images/";
+            // Current directory + filename
+            $target_file = $target_dir . basename($image["file"]["name"]);
+            $uploadOk = 1;
+            // file type = png
+            $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
 
 
-            $em->persist($product);
-            $em->flush();
+            // Checking if it an image
+            $check = getimagesize($_FILES["file"]["tmp_name"]);
+            if ($check !== false) {
+                // File is an image
+                $uploadOk = 1;
+            } else {
+                $uploadOk = 0;
+            }
 
-            return new JsonResponse([
-                'test' => 'testpassed'
-            ]);
+            // Integrity checks
+            // https://www.w3schools.com/php/php_file_upload.asp
 
-        } elseif ($request->getMethod() === "OPTIONS") {
-            return new Response('Cross-site request preflight, option method used', 200);
+
+            if ($uploadOk == 1) {
+                // We move the file from the temporary directory to the target.
+                if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
+
+                    $pathImage = new image();
+                    $pathImage->setPath($image["file"]["name"]);
+                    $em->persist($pathImage);
+                    $em->flush();
+
+                    return new Response("The file " . basename($image["file"]["name"]) . " has been uploaded.");
+                } else {
+                    return new  Response("Sorry, there was an error uploading your file.");
+                }
+            }
+
+
+
+//
+//
+//            $pictureJson = json_decode($request->getContent(), true);
+//            $picture = $pictureJson["pic64"];
+//            $name = $pictureJson["path"];
+//
+//            //$decodePicture = base64_decode($picture);
+//            var_dump($picture); die();
+//
+//            $product = new Product();
+//            $product->setImage($target_file);
+//            $product->setUpdatedAt(new \DateTime());
+//            $product->setImageFile($image["file"]["tmp_name"]);
+//
+//            $em->persist($product);
+//            $em->flush();
+//
+//            return new JsonResponse([
+//                'test' => 'testpassed'
+//            ]);
+//
+//        } elseif ($request->getMethod() === "OPTIONS") {
+//            return new Response('Cross-site request preflight, option method used', 200);
+//        }
+
         }
-
-//        $pictureJson = json_decode($request->getContent(), true);
-//
-//        //var_dump($pictureJson);
-//
-//        $raqqa = $pictureJson["path"];
-//        //var_dump($raqqa); die();
-//
-//        $pic64 = base64_decode($pictureJson["pic64"]);
-//
-//        $response = new Response;
-//
-//        $response->setContent(
-//            json_encode(['pic64' => 'ok'])
-//        );
-//        $response->headers->set('Content-Type', 'application/json');
-
-
-
     }
 }

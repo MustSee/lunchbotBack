@@ -181,6 +181,11 @@ class Place
         return $this->coordsLongitude;
     }
 
+    protected function getUploadDir()
+    {
+        return 'images/';
+    }
+
     /**
      * Set picturePath
      *
@@ -190,7 +195,7 @@ class Place
      */
     public function setPicturePath($picturePath)
     {
-        $this->picturePath = $picturePath;
+        $this->picturePath = $this->getUploadDir().$picturePath;
 
         return $this;
     }

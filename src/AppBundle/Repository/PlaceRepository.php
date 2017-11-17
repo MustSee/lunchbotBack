@@ -56,4 +56,14 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
         ]);
         return $q->getResult();
     }
+
+    public function retrieveImagePathFromName($param) {
+        $q = $this->getEntityManager()->createQuery('
+        SELECT p.picturePath FROM AppBundle:Place p WHERE p.name = :name
+        ');
+        $q->setParameters([
+           'name' => $param
+        ]);
+        return $q->getResult();
+    }
 }
