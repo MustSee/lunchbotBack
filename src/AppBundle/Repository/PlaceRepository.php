@@ -37,6 +37,19 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
         return $q->getResult();
     }
 
+    public function deletePlace($name, $lat, $lng) {
+        $q = $this->getEntityManager()->createQuery('
+            DELETE AppBundle:Place p WHERE p.name = :name AND p.coordsLatitude = :lat AND 
+            p.coordsLongitude = :lng
+        ');
+        $q->setParameters([
+            'name' => $name,
+            'lat' => $lat,
+            'lng' => $lng
+        ]);
+        return $q->getResult();
+    }
+
     public function incrementCounter($param) {
         return $this->createQueryBuilder('p')
             ->update('AppBundle:Place', 'p')

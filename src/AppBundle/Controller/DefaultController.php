@@ -8,14 +8,10 @@ use AppBundle\Entity\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
-use Symfony\Component\HttpFoundation\File\File;
-use Symfony\Component\HttpFoundation\File\UploadedFile;
 use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\HttpFoundation\ResponseHeaderBag;
-use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
 {
@@ -35,7 +31,6 @@ class DefaultController extends Controller
             'places' => $places
         ]);
     }
-
 
     /**
      * @Route("/api/places/{name}")
@@ -81,12 +76,12 @@ class DefaultController extends Controller
      */
     public function postPlacesAction(Request $request)
     {
-    /*
-     * Chrome is preflighting the request to look for CORS headers.
-     * If the request is acceptable, it will then send the real request.
-     * If you're doing this cross-domain, you will simply have to deal with it.
-     */
-        if($request->getMethod() === "POST") {
+        /*
+         * Chrome is preflighting the request to look for CORS headers.
+         * If the request is acceptable, it will then send the real request.
+         * If you're doing this cross-domain, you will simply have to deal with it.
+         */
+        if ($request->getMethod() === "POST") {
             $em = $this->get('doctrine')->getManager();
 
             // Obtaining associative array with the option true
@@ -97,14 +92,14 @@ class DefaultController extends Controller
 
             $place->setName($placeJson["name"]);
             $place->setAdress($placeJson['adress']);
-            $place->setCoordsLatitude($placeJson['lat']);
-            $place->setCoordsLongitude($placeJson['lng']);
+            $place->setCoordsLatitude($placeJson['coordsLatitude']);
+            $place->setCoordsLongitude($placeJson['coordsLongitude']);
 
             // Obtaining image
             $image = $_FILES;
 
             // Si l'image existe
-            if($image) {
+            if ($image) {
                 // Current directory
                 $target_dir = __DIR__ . "/../../../web/images/";
                 // Current directory + filename
@@ -149,24 +144,24 @@ class DefaultController extends Controller
      */
     public function addALikeOnPlace(Request $request)
     {
-            $place = $request->get('name');
+        $place = $request->get('name');
 
-            $em = $this->get('doctrine')->getManager();
-            $linkToRepo = $em->getRepository('AppBundle:Place');
-            $linkToRepo->incrementCounter($place);
+        $em = $this->get('doctrine')->getManager();
+        $linkToRepo = $em->getRepository('AppBundle:Place');
+        $linkToRepo->incrementCounter($place);
 
-            $likeCount = $linkToRepo->retrieveLike($place);
+        $likeCount = $linkToRepo->retrieveLike($place);
 
-            return new JSONResponse([
-                'likeCount' => $likeCount
-            ]);
+        return new JSONResponse([
+            'likeCount' => $likeCount
+        ]);
     }
 
     /**
      * @Route("/api/likeCounter/{name}")
      * @Method("GET")
      */
-    public function likeCounterAction (Request $request)
+    public function likeCounterAction(Request $request)
     {
         $place = $request->get("name");
 
@@ -197,24 +192,53 @@ class DefaultController extends Controller
             return new Response('no image');
         } else {
             $path = $imagePathFromName[0]["picturePath"];
-            $target_dir = __DIR__."/../../../web/";
-            $response =  new BinaryFileResponse($target_dir.$path);
+            $target_dir = __DIR__ . "/../../../web/";
+            $response = new BinaryFileResponse($target_dir . $path);
             return $response;
         }
 
     }
 
     /**
+     * @Route("/api/deletePlace/")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function deletePlaceAction(Request $request)
+    {
+        if($request->getMethod() === 'POST') {
+
+            $em = $this->get('doctrine')->getManager();
+            $linkToRepo = $em->getRepository('AppBundle:Place');
+
+            $place = $request->getContent();
+            var_dump($place); die();
+            $place = json_decode($place, true);
+            $lat = $place["lat"];
+            $lng = $place["lng"];
+            $name = $place["name"];
+
+            // if deleted, returns 1, if not returns 0
+            $res = $linkToRepo->deletePlace($name, $lat, $lng);
+
+            return new JSONResponse ([
+                'response' => $res
+            ]);
+
+        } else if ($request->getMethod() === 'OPTIONS') {
+            return new Response ('Cross-site request preflight, option method used', 200);
+        }
+    }
+
+    /**
      * @Route("/api/test")
      * @Method({"POST", "OPTIONS"})
      */
-    public function testAction (Request $request)
+    public function testAction(Request $request)
     {
 
         if ($request->getMethod() === 'POST') {
 
             $em = $this->get('doctrine')->getManager();
-
 
             $image = $_FILES;
 
@@ -223,21 +247,22 @@ class DefaultController extends Controller
             // If image is empty
 
             // Current directory
-            $target_dir = __DIR__."/../../../web/images/";
+            $target_dir = __DIR__ . "/../../../web/images/";
             // Current directory + filename
             $target_file = $target_dir . basename($image["file"]["name"]);
-            $uploadOk = 1;
+            $uploadOk = true;
             // file type = png
             $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
 
 
             // Checking if it an image
             $check = getimagesize($_FILES["file"]["tmp_name"]);
+            var_dump($check); die();
             if ($check !== false) {
                 // File is an image
-                $uploadOk = 1;
+                $uploadOk = true;
             } else {
-                $uploadOk = 0;
+                $uploadOk = false;
             }
 
             // Integrity checks
@@ -258,34 +283,8 @@ class DefaultController extends Controller
                     return new  Response("Sorry, there was an error uploading your file.");
                 }
             }
-
-
-
-//
-//
-//            $pictureJson = json_decode($request->getContent(), true);
-//            $picture = $pictureJson["pic64"];
-//            $name = $pictureJson["path"];
-//
-//            //$decodePicture = base64_decode($picture);
-//            var_dump($picture); die();
-//
-//            $product = new Product();
-//            $product->setImage($target_file);
-//            $product->setUpdatedAt(new \DateTime());
-//            $product->setImageFile($image["file"]["tmp_name"]);
-//
-//            $em->persist($product);
-//            $em->flush();
-//
-//            return new JsonResponse([
-//                'test' => 'testpassed'
-//            ]);
-//
-//        } elseif ($request->getMethod() === "OPTIONS") {
-//            return new Response('Cross-site request preflight, option method used', 200);
-//        }
-
+        } elseif ($request->getMethod() === "OPTIONS") {
+            return new Response('Cross-site request preflight, option method used', 200);
         }
     }
 }
