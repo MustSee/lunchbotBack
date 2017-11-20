@@ -3,6 +3,7 @@
 namespace AppBundle\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 /**
  * Place
@@ -70,8 +71,17 @@ class Place
      */
     private $likeSpot;
 
+    /**
+     * @var \DateTime
+     *
+     * @ORM\Column(name="updatedAt", type="datetime", nullable=true)
+     */
+    private $updatedAt;
+
+
     public function __construct() {
         $this->setLikeSpot(0);
+        $this->setCreatedAt(new \DateTime());
     }
 
 
@@ -181,10 +191,10 @@ class Place
         return $this->coordsLongitude;
     }
 
-    protected function getUploadDir()
-    {
-        return 'images/';
-    }
+//    protected function getUploadDir()
+//    {
+//        return 'images/';
+//    }
 
     /**
      * Set picturePath
@@ -195,7 +205,8 @@ class Place
      */
     public function setPicturePath($picturePath)
     {
-        $this->picturePath = $this->getUploadDir().$picturePath;
+        $this->picturePath = $picturePath;
+        //$this->picturePath = $this->getUploadDir().$picturePath;
 
         return $this;
     }
@@ -232,6 +243,30 @@ class Place
     public function getCreatedAt()
     {
         return $this->createdAt;
+    }
+
+    /**
+     * Set updateddAt
+     *
+     * @param \DateTime $updatedAt
+     *
+     * @return Place
+     */
+    public function setUpdatedAt($updatedAt)
+    {
+        $this->updatedAt = $updatedAt;
+
+        return $this;
+    }
+
+    /**
+     * Get updatedAt
+     *
+     * @return \DateTime
+     */
+    public function getupdatedAt()
+    {
+        return $this->updatedAt;
     }
 
     /**

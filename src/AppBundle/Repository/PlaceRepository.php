@@ -1,6 +1,7 @@
 <?php
 
 namespace AppBundle\Repository;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 /**
  * PlaceRepository
@@ -12,7 +13,7 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
 {
     public function findPlaces() {
         $q = $this->getEntityManager()->createQuery('
-        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot FROM AppBundle:Place p
+        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot, p.picturePath FROM AppBundle:Place p
         ');
         return $q->getResult();
     }
@@ -33,6 +34,18 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
         ');
         $q->setParameters([
             'param' => "%".$param."%"
+        ]);
+        return $q->getResult();
+    }
+
+    public function getPath($name, $lat, $lng) {
+        $q = $this->getEntityManager()->createQuery('
+        SELECT p.picturePath FROM AppBundle:Place p WHERE p.name = :name AND p.coordsLatitude = :lat AND p.coordsLongitude = :lng
+        ');
+        $q->setParameters([
+           'name' => $name,
+            'lat' => $lat,
+            'lng' => $lng
         ]);
         return $q->getResult();
     }

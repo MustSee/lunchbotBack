@@ -12,6 +12,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
 {
@@ -192,7 +193,7 @@ class DefaultController extends Controller
             return new Response('no image');
         } else {
             $path = $imagePathFromName[0]["picturePath"];
-            $target_dir = __DIR__ . "/../../../web/";
+            $target_dir = __DIR__ . "/../../../web/images/";
             $response = new BinaryFileResponse($target_dir . $path);
             return $response;
         }
@@ -205,17 +206,25 @@ class DefaultController extends Controller
      */
     public function deletePlaceAction(Request $request)
     {
+
         if($request->getMethod() === 'POST') {
 
             $em = $this->get('doctrine')->getManager();
             $linkToRepo = $em->getRepository('AppBundle:Place');
 
             $place = $request->getContent();
-            var_dump($place); die();
             $place = json_decode($place, true);
             $lat = $place["lat"];
             $lng = $place["lng"];
             $name = $place["name"];
+
+            // On récupère le path pour pouvoir ensuite delete l'image
+            $path = $linkToRepo->getPath($name, $lat, $lng);
+            // Erase image from web/images
+            if($path[0]["picturePath"] != NULL) {
+                $target_dir = __DIR__ . "/../../../web/images/";
+                $deleteImage = unlink($target_dir.$path[0]["picturePath"]);
+            }
 
             // if deleted, returns 1, if not returns 0
             $res = $linkToRepo->deletePlace($name, $lat, $lng);
@@ -225,6 +234,102 @@ class DefaultController extends Controller
             ]);
 
         } else if ($request->getMethod() === 'OPTIONS') {
+            return new Response ('Cross-site request preflight, option method used', 200);
+        }
+    }
+
+    /**
+     * @Route("/api/updatePlace")
+     * @Method({"POST", "OPTIONS"})
+     */
+    public function updatePlaceAction(Request $request)
+    {
+        if($request->getMethod() === "POST") {
+            // To repo
+            $em = $this->get('doctrine')->getManager();
+            $linkToRepo = $em->getRepository('AppBundle:Place');
+
+            $place = $request->get('place');
+            $place = json_decode($place, true);
+
+            $image = $_FILES;
+            // Check if the file exists...
+            // TODO : Replace the old one if exists...
+
+            // Si l'image existe
+            if ($image) {
+                // Current directory
+                $target_dir = __DIR__ . "/../../../web/images/";
+                // Current directory + filename
+                $target_file = $target_dir . basename($image["file"]["name"]);
+                $uploadOk = 1;
+                // file type = png
+                $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
+
+                // Checking if it's an image
+                $check = getimagesize($_FILES["file"]["tmp_name"]);
+                if ($check !== false) {
+                    // File is an image
+                    $uploadOk = 1;
+                } else {
+                    $uploadOk = 0;
+                }
+
+                // TODO : Integrity checks
+                // https://www.w3schools.com/php/php_file_upload.asp
+
+                if ($uploadOk == 1) {
+                    // We move the file from the temporary directory to the target.
+                    if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
+                        $picturePath = $image["file"]["name"];
+                    } else {
+                        $picturePath = null;
+                    }
+                }
+            } else {
+                $picturePath = null;
+            }
+
+            // Il faut que je fasse la modification par l'id
+
+            $id = strval($place["id"]);
+            $name = $place["name"];
+            $adress = $place["adress"];
+            $lat = strval($place["coordsLatitude"]);
+            $lng = strval($place["coordsLongitude"]);
+
+            // On récupère le path pour pouvoir ensuite delete l'image
+            $path = $linkToRepo->getPath($name, $lat, $lng);
+            // Erase image from web/images
+            if($path[0]["picturePath"] != NULL) {
+                $target_dir = __DIR__ . "/../../../web/images/";
+                $deleteImage = unlink($target_dir.$path[0]["picturePath"]);
+            }
+
+            // We retrieve the object found by ID
+            $place = $linkToRepo->findOneBy(array('id' => $id));
+            // We reset the object
+            $place->setName($name);
+            $place->setAdress($adress);
+            $place->setCoordsLatitude($lat);
+            $place->setCoordsLongitude($lng);
+            $place->setPicturePath($picturePath);
+            $place->setUpdatedAt(new \DateTime());
+            $em->persist($place);
+            $em->flush();
+
+            // On retourne l'objet updaté
+            $res = $linkToRepo->findOneBy(['id' => $id]);
+            var_dump($res); die();
+
+            //$res = $linkToRepo->updatePlace($id, $name, $adress, $lat, $lng, $picturePath, $datetime);
+
+            // I need the response to set isActive state !! Check out what is in the response !!!
+            return new JsonResponse([
+               'response' => $res
+            ]);
+
+        } else if($request->getMethod() === "OPTIONS") {
             return new Response ('Cross-site request preflight, option method used', 200);
         }
     }
@@ -257,7 +362,6 @@ class DefaultController extends Controller
 
             // Checking if it an image
             $check = getimagesize($_FILES["file"]["tmp_name"]);
-            var_dump($check); die();
             if ($check !== false) {
                 // File is an image
                 $uploadOk = true;
