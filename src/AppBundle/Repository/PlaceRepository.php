@@ -28,6 +28,27 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
         return $q->getResult();
     }
 
+    public function findPlaceByAdress($param) {
+        $q = $this->getEntityManager()->createQuery('
+        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot FROM AppBundle:Place p WHERE p.adress = :adress
+        ');
+        $q->setParameters([
+            'adress' => $param
+        ]);
+        return $q->getResult();
+    }
+
+    public function findPlaceById($param) {
+        $q = $this->getEntityManager()->createQuery('
+        SELECT p.name, p.coordsLongitude, p.coordsLatitude, p.adress, p.id, p.likeSpot FROM AppBundle:Place p WHERE p.id = :id
+        ');
+        $q->setParameters([
+            'id' => $param
+        ]);
+        return $q->getResult();
+    }
+
+
     public function findAllByChars($param) {
         $q = $this->getEntityManager()->createQuery('
             SELECT p.name FROM AppBundle:Place p WHERE p.name LIKE :param
@@ -64,14 +85,14 @@ class PlaceRepository extends \Doctrine\ORM\EntityRepository
     }
 
     public function incrementCounter($param) {
-        return $this->createQueryBuilder('p')
-            ->update('AppBundle:Place', 'p')
-            ->set('p.likeSpot', 'p.likeSpot + 1')
-            ->where('p.name = :param')
-            ->setParameter('param', $param)
-            ->getQuery()
-            ->execute();
-    }
+    return $this->createQueryBuilder('p')
+        ->update('AppBundle:Place', 'p')
+        ->set('p.likeSpot', 'p.likeSpot + 1')
+        ->where('p.name = :param')
+        ->setParameter('param', $param)
+        ->getQuery()
+        ->execute();
+}
 
     public function retrieveLike($param) {
         $q = $this->getEntityManager()->createQuery('

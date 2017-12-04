@@ -2,9 +2,7 @@
 
 namespace AppBundle\Controller;
 
-use AppBundle\Entity\image;
 use AppBundle\Entity\Place;
-use AppBundle\Entity\Product;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Route;
 use Symfony\Bundle\FrameworkBundle\Controller\Controller;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -12,7 +10,6 @@ use Symfony\Component\HttpFoundation\Request;
 use Sensio\Bundle\FrameworkExtraBundle\Configuration\Method;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Validator\Constraints\DateTime;
 
 class DefaultController extends Controller
 {
@@ -84,10 +81,18 @@ class DefaultController extends Controller
          */
         if ($request->getMethod() === "POST") {
             $em = $this->get('doctrine')->getManager();
+            $linkToRepo = $em->getRepository('AppBundle:Place');
 
             // Obtaining associative array with the option true
             $place = $request->get('place');
             $placeJson = json_decode($place, true);
+
+            // We check if the address or the place name is already in the database or not
+            $isAdress = $linkToRepo->findPlaceByAdress($placeJson['adress']);
+            $isName = $linkToRepo->findPlace($placeJson['name']);
+            if(sizeof($isAdress) === 1 || sizeof($isName) === 1) {
+                return new JsonResponse(["error" => "Adresse et/ou nom déjà existant(s)"]);
+            }
 
             $place = new Place();
 
@@ -96,17 +101,17 @@ class DefaultController extends Controller
             $place->setCoordsLatitude($placeJson['coordsLatitude']);
             $place->setCoordsLongitude($placeJson['coordsLongitude']);
 
+
             // Obtaining image
             $image = $_FILES;
 
-            // Si l'image existe
+            // If image exists
             if ($image) {
                 // Current directory
                 $target_dir = __DIR__ . "/../../../web/images/";
                 // Current directory + filename
                 $target_file = $target_dir . basename($image["file"]["name"]);
-                $uploadOk = 1;
-                // file type = png
+                // file type
                 $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
 
                 // Checking if it's an image
@@ -118,13 +123,13 @@ class DefaultController extends Controller
                     $uploadOk = 0;
                 }
 
-                // Integrity checks
-                // https://www.w3schools.com/php/php_file_upload.asp
-
                 if ($uploadOk == 1) {
                     // We move the file from the temporary directory to the target.
-                    if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
-                        $place->setPicturePath($image["file"]["name"]);
+                    // We create a uniq id to identify the image, we just add the filetype of the image
+                    $newPath = sha1(uniqid(mt_rand(), true)).'.'.$imageFileType;
+                    // We move the file from the temporary directory to the web directory with the new path
+                    if (move_uploaded_file($image["file"]["tmp_name"], $target_dir . $newPath)) {
+                        $place->setPicturePath($newPath);
                     }
                 }
             }
@@ -132,7 +137,11 @@ class DefaultController extends Controller
             $em->persist($place);
             $em->flush();
 
-            return new Response('add one place', 201);
+            // We retrieve the new place information, especially the id
+            // If we don't do it, we cannot update just after having post a new place
+            $newPlace = $linkToRepo->findPlace($placeJson["name"]);
+
+            return new JsonResponse(['newPlace'=>$newPlace]);
 
         } elseif ($request->getMethod() === "OPTIONS") {
             return new Response('Cross-site request preflight, option method used', 200);
@@ -194,7 +203,7 @@ class DefaultController extends Controller
             $response = new BinaryFileResponse($target_dir . $path);
             return $response;
         } else {
-            // S'il n'y a pas d'images
+            // If there is no image
             return new Response('no image');
         }
     }
@@ -217,15 +226,15 @@ class DefaultController extends Controller
             $lng = $place["lng"];
             $name = $place["name"];
 
-            // On récupère le path pour pouvoir ensuite delete l'image
+            // We retrieve the path to be able to delete the image
             $path = $linkToRepo->getPath($name, $lat, $lng);
             // Erase image from web/images
             if($path[0]["picturePath"] != NULL) {
                 $target_dir = __DIR__ . "/../../../web/images/";
-                $deleteImage = unlink($target_dir.$path[0]["picturePath"]);
+                unlink($target_dir.$path[0]["picturePath"]);
             }
 
-            // if deleted, returns 1, if not returns 0
+            // if deleted : returns 1, if not : returns 0
             $res = $linkToRepo->deletePlace($name, $lat, $lng);
 
             return new JSONResponse ([
@@ -262,20 +271,24 @@ class DefaultController extends Controller
             $placeFromDb = $linkToRepo->findOneBy(array('id' => $id));
             $path = $placeFromDb->getPicturePath();
 
+
+
             // The goal is to set the picturePath before persisting in DB
             // We check if the path exists
             // If the path exists (the place has already an image)
             if ($path != NULL) {
-                // -> we check if there is a file in the formula
+                // -> we check if there is a file in the form
                 if(isset($image["file"])) {
                     // Erase old image from web repertory
                     unlink($target_dir.$path);
 
                     // Register new Image to web repertory
                     $target_file = $target_dir . basename($image["file"]["name"]);
-                    move_uploaded_file($image["file"]["tmp_name"], $target_file);
-                    // picture path à setter
-                    $picturePath = $image["file"]["name"];
+                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
+                    $newPath = sha1(uniqid(mt_rand(), true)).'.'.$imageFileType;
+                    move_uploaded_file($image["file"]["tmp_name"], $target_dir . $newPath);
+                    // picture path to be set
+                    $picturePath = $newPath;
                 }
                 // -> if there is a Preview, it means the image is not changed
                 elseif ($imagePreview) {
@@ -292,9 +305,11 @@ class DefaultController extends Controller
             else {
                 if(isset($image["file"])) {
                     $target_file = $target_dir . basename($image["file"]["name"]);
-                    move_uploaded_file($image["file"]["tmp_name"], $target_file);
+                    $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
+                    $newPath = sha1(uniqid(mt_rand(), true)).'.'.$imageFileType;
+                    move_uploaded_file($image["file"]["tmp_name"], $target_dir . $newPath);
                     // picture path à setter
-                    $picturePath = $image["file"]["name"];
+                    $picturePath = $newPath;
                 } else {
                     $picturePath = NULL;
                 }
@@ -316,147 +331,16 @@ class DefaultController extends Controller
             $em->persist($placeFromDb);
             $em->flush();
 
-            $res = $linkToRepo->findOneBy(['id' => $id]);
+            $res = $linkToRepo->findPlaceById($id);
 
             return new JsonResponse([
                 'response' => $res
             ]);
-
-            return new Response ('Place updated successfully', 200);
-
-
-//           /* $image = $_FILES;
-//            // Check if the file exists...
-//            // TODO : Replace the old one if exists...
-//
-//            // Si l'image existe
-//            if ($image) {
-//                // Current directory
-//                $target_dir = __DIR__ . "/../../../web/images/";
-//                // Current directory + filename
-//                $target_file = $target_dir . basename($image["file"]["name"]);
-//                $uploadOk = 1;
-//                // file type = png
-//                $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-//
-//                // Checking if it's an image
-//                $check = getimagesize($_FILES["file"]["tmp_name"]);
-//                if ($check !== false) {
-//                    // File is an image
-//                    $uploadOk = 1;
-//                } else {
-//                    $uploadOk = 0;
-//                }
-//
-//                // TODO : Integrity checks
-//                // https://www.w3schools.com/php/php_file_upload.asp
-//
-//                if ($uploadOk == 1) {
-//                    // We move the file from the temporary directory to the target.
-//                    if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
-//                        $picturePath = $image["file"]["name"];
-//                    } else {
-//                        $picturePath = null;
-//                    }
-//                }
-//            } else {
-//                $picturePath = null;
-//            }*/
-
-            // Il faut que je fasse la modification par l'id
-
-
-
-//            // On récupère le path pour pouvoir ensuite delete l'image
-//            $path = $linkToRepo->getPath($name, $lat, $lng);
-//            // Erase image from web/images
-//            if($path[0]["picturePath"] != NULL) {
-//                $target_dir = __DIR__ . "/../../../web/images/";
-//                $deleteImage = unlink($target_dir.$path[0]["picturePath"]);
-//            }
-
-            // We retrieve the object found by ID
-//            $place = $linkToRepo->findOneBy(array('id' => $id));
-//            // We reset the object
-//            $place->setName($name);
-//            $place->setAdress($adress);
-//            $place->setCoordsLatitude($lat);
-//            $place->setCoordsLongitude($lng);
-//            $place->setPicturePath($picturePath);
-//            $place->setUpdatedAt(new \DateTime());
-//            $em->persist($place);
-//            $em->flush();
-
-//            // On retourne l'objet updaté
-//            $res = $linkToRepo->findOneBy(['id' => $id]);
-//
-//            //$res = $linkToRepo->updatePlace($id, $name, $adress, $lat, $lng, $picturePath, $datetime);
-//
-//            // I need the response to set isActive state !! Check out what is in the response !!!
-//            return new JsonResponse([
-//               'response' => $res
-//            ]);
 
         } else if($request->getMethod() === "OPTIONS") {
             return new Response ('Cross-site request preflight, option method used', 200);
         }
     }
 
-    /**
-     * @Route("/api/test")
-     * @Method({"POST", "OPTIONS"})
-     */
-    public function testAction(Request $request)
-    {
-
-        if ($request->getMethod() === 'POST') {
-
-            $em = $this->get('doctrine')->getManager();
-
-            $image = $_FILES;
-
-            $name = $request->get('name');
-
-            // If image is empty
-
-            // Current directory
-            $target_dir = __DIR__ . "/../../../web/images/";
-            // Current directory + filename
-            $target_file = $target_dir . basename($image["file"]["name"]);
-            $uploadOk = true;
-            // file type = png
-            $imageFileType = pathinfo($target_file, PATHINFO_EXTENSION);
-
-
-            // Checking if it an image
-            $check = getimagesize($_FILES["file"]["tmp_name"]);
-            if ($check !== false) {
-                // File is an image
-                $uploadOk = true;
-            } else {
-                $uploadOk = false;
-            }
-
-            // Integrity checks
-            // https://www.w3schools.com/php/php_file_upload.asp
-
-
-            if ($uploadOk == 1) {
-                // We move the file from the temporary directory to the target.
-                if (move_uploaded_file($image["file"]["tmp_name"], $target_file)) {
-
-                    $pathImage = new image();
-                    $pathImage->setPath($image["file"]["name"]);
-                    $em->persist($pathImage);
-                    $em->flush();
-
-                    return new Response("The file " . basename($image["file"]["name"]) . " has been uploaded.");
-                } else {
-                    return new  Response("Sorry, there was an error uploading your file.");
-                }
-            }
-        } elseif ($request->getMethod() === "OPTIONS") {
-            return new Response('Cross-site request preflight, option method used', 200);
-        }
-    }
 }
+
